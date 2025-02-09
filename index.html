@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>IP address playground</title>
+	<link rel="stylesheet" href="style.css">
+	<script src="script.js" defer></script>
+</head>
+
+<body>
+	<h1>IP address playground</h1>
+
+	<div>
+		<h2 id="mainIpDisplay">0.0.0.0</h2>
+		<div>
+			<input id="mainIpInput" type="text" placeholder="Enter IP address here" value="0.0.0.0">
+			<span id="errorMessage"></span>
+		</div>
+
+		<!-- TODO: Add proper spacing via CSS -->
+		<p><br></p>
+
+		<ip-panel base="10"></ip-panel>
+
+		<p><br></p>
+
+		<ip-panel base="2"></ip-panel>
+
+		<p><br></p>
+
+		<ip-panel base="16"></ip-panel>
+	</div>
+	<!--
+		TODO:
+		* Add IPv6 support
+		* Base 2: display leading zero
+		* Add mask
+		* Allow individual bytes edit
+		* CSS
+		* Add about section
+		* Add tests for IP parsing
+	-->
+</body>
+
+</html>

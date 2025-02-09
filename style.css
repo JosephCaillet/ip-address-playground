@@ -1,0 +1,17 @@
+/* Dark theme */
+body {
+	transition: background 1s, color 1s;
+	font-family: monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+	body {
+		background-color: #1c1c1e ;
+		color: #fafafa ;
+		}
+}
+
+/* Main css */
+ip-panel .div-cntnr span {
+	display: inline-block;
+}
