@@ -1,15 +1,20 @@
 "use strict";
 
 class IpAddress {
-	constructor(ip, base = 10) {
-
+	constructor(ip) {
 		// Check IP version
 		if (ip.includes(".")) {
 			// IPv4
 			this.version = 4
+			if (!/^[0-9.]*$/.test(ip)) {
+				throw new Error("Invalid IPv4: contains invalid characters")
+			}
 		} else if (ip.includes(":")) {
 			// IPv6
 			this.version = 6
+			if (!/^[0-9a-fA-F:]*$/.test(ip)) {
+				throw new Error("Invalid IPv6: contains invalid characters")
+			}
 		} else {
 			throw new Error("Invalid IP: nor IPv4 nor IPv6")
 		}
@@ -22,12 +27,17 @@ class IpAddress {
 		if (this.isIpv4() && ip.includes("..")) {
 			throw new Error("Invalid IPv4: \".\" is seen more that once in row")
 		}
-		if (this.isIpv6() && ip.includes("::")) {
-			if (ip.includes(":::")) {
-				throw new Error("Invalid IPv6: \":\" is seen more that twice in row")
+		if (this.isIpv6()) {
+			let doubleColumnCount = (ip.match(/::/g) || []).length
+			if (doubleColumnCount > 1) {
+				throw new Error("Invalid IPv6: \"::\" can be used only once")
+			} else if (doubleColumnCount == 1) {
+				if (ip.includes(":::")) {
+					throw new Error("Invalid IPv6: \":\" is seen more that twice in row")
+				}
+				ip = ip.replace("::", ":".repeat(2 + bytesGroupsNumber - this.bytesGroups.length))
+				this.bytesGroups = ip.split(this.getBytesGroupsSeparator())
 			}
-			ip = ip.replace("::", ":".repeat(2 + bytesGroupsNumber - this.bytesGroups.length))
-			this.bytesGroups = ip.split(this.getBytesGroupsSeparator())
 		}
 
 		// Check bytes group number
@@ -43,16 +53,19 @@ class IpAddress {
 			}
 
 			// Check is valid number
+			let base = this.getDefaultBase()
 			let byteGroupValue = parseInt(this.bytesGroups[i], base)
 			if (Number.isNaN(byteGroupValue)) {
 				throw new Error(`Invalid IP: bytes group number ${i + 1} is not a base ${base} number`)
 			}
 
 			// Check is within range
-			let max = this.isIpv4() ? 2 ** 8 : 2 ** 16
+			let max = this.isIpv4() ? 2 ** 8 - 1 : 2 ** 16 - 1
 			if (byteGroupValue < 0 || byteGroupValue > max) {
 				throw new Error(`Invalid IP: bytes group number ${i + 1} must be a number between 0 and ${max}`)
 			}
+
+			this.bytesGroups[i] = byteGroupValue
 		}
 	}
 
@@ -68,12 +81,19 @@ class IpAddress {
 		return this.isIpv4() ? "." : ":"
 	}
 
+	getDefaultBase() {
+		return this.isIpv4() ? 10 : 16
+	}
+
 	// TODO: add support for IPv6 compressed notation
 	getBytesGroupsString(base = 10) {
 		return this.bytesGroups.map(bg => Number(bg).toString(base))
 	}
 
-	getIpString(base = 10) {
+	getIpString(base) {
+		if (!base) {
+			base = this.getDefaultBase()
+		}
 		return this.getBytesGroupsString(base).join(this.getBytesGroupsSeparator())
 	}
 }
@@ -125,7 +145,7 @@ class IpPanel extends HTMLElement {
 		// TODO: find a way to display base 2 with leading zeros
 		let bytesGroups = ip.getBytesGroupsString(this.base)
 		let displays = Array.from(this.querySelectorAll(".display"))
-		let inputs   = Array.from(this.querySelectorAll("input"))
+		let inputs = Array.from(this.querySelectorAll("input"))
 
 		for (let i = 0; i < bytesGroups.length; i++) {
 			displays[i].innerText = bytesGroups[i]
@@ -144,7 +164,7 @@ function main() {
 	})
 
 	// First refresh init
-	refreshIp(document.querySelector("#mainIpInput").value )
+	refreshIp(document.querySelector("#mainIpInput").value)
 }
 
 function refreshIp(ip) {
