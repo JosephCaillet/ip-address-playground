@@ -1,17 +1,28 @@
 /* Dark theme */
 body {
 	transition: background 1s, color 1s;
-	font-family: monospace;
 }
 
 @media (prefers-color-scheme: dark) {
 	body {
 		background-color: #1c1c1e ;
 		color: #fafafa ;
-		}
+	}
 }
 
 /* Main css */
+body, input {
+	font-family: monospace;
+}
+
 ip-panel .div-cntnr span {
 	display: inline-block;
+}
+
+ip-panel[version="4"] input{
+	max-width: 4.5em;
+}
+
+ip-panel[version="6"] input{
+	max-width: 9em;
 }

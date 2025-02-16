@@ -120,47 +120,44 @@ class IpPanel extends HTMLElement {
 	constructor() {
 		super()
 		this.base = 10
+		this.version = 4
 	}
 
 	connectedCallback() {
-		this.base = this.getAttribute("base")
+		this.buildHtmlContent()
+	}
 
-		// TODO: fix selection (one should be able to select the first displayed line only)
-		this.innerHTML = `
-			<div class="div-cntnr">
+	// TODO: fix selection (one should be able to select the first displayed line only)
+	buildHtmlContent() {
+		this.base = this.getAttribute("base")
+		this.version = this.getAttribute("version")
+
+		let content = []
+		for (let i = 0; i < (this.version == 4 ? 4 : 8); i++) {
+			content.push(`
 				<span>
 					<div class="display">0</div>
 					<div><input type="text"></div>
 				</span>
-				<span>
-					<div>.</div>
-					<div>.</div>
-				</span>
-				<span>
-					<div class="display">0</div>
-					<div><input type="text"></div>
-				</span>
-				<span>
-					<div>.</div>
-					<div>.</div>
-				</span>
-				<span>
-					<div class="display">0</div>
-					<div><input type="text"></div>
-				</span>
-				<span>
-					<div>.</div>
-					<div>.</div>
-				</span>
-				<span>
-					<div class="display">0</div>
-					<div><input type="text"></div>
-				</span>
-			</div>`
+			`)
+		}
+
+		content = content.join(`
+			<span>
+				<div>${this.version == 4 ? "." : ":"}</div>
+				<div>${this.version == 4 ? "." : ":"}</div>
+			</span>
+		`)
+
+		this.innerHTML = `<div class="div-cntnr">${content}</div>`
 	}
 
 	setIp(ip) {
-		// TODO: find a way to display base 2 with leading zeros
+		if (ip.version != this.version) {
+			this.setAttribute("version", ip.version)
+			this.buildHtmlContent()
+		}
+
 		let bytesGroups = ip.getBytesGroupsString(this.base, this.base != 10)
 		let displays = Array.from(this.querySelectorAll(".display"))
 		let inputs = Array.from(this.querySelectorAll("input"))
