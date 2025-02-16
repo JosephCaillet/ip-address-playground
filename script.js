@@ -1,6 +1,19 @@
 "use strict";
 
 class IpAddress {
+	static paddingConf = {
+		4: {
+			2: 8,
+			10: 3,
+			16: 2
+		},
+		6: {
+			2: 16,
+			10: 5,
+			16: 4
+		}
+	}
+
 	constructor(ip) {
 		// Check IP version
 		if (ip.includes(".")) {
@@ -86,15 +99,20 @@ class IpAddress {
 	}
 
 	// TODO: add support for IPv6 compressed notation
-	getBytesGroupsString(base = 10) {
-		return this.bytesGroups.map(bg => Number(bg).toString(base))
+	getBytesGroupsString(base = 10, padded = false) {
+		let bytesGroupsString = this.bytesGroups.map(bg => Number(bg).toString(base))
+		if (padded) {
+
+			bytesGroupsString = bytesGroupsString.map(s => s.padStart(IpAddress.paddingConf[this.version][base], 0))
+		}
+		return bytesGroupsString
 	}
 
-	getIpString(base) {
+	getIpString(base, padded = false) {
 		if (!base) {
 			base = this.getDefaultBase()
 		}
-		return this.getBytesGroupsString(base).join(this.getBytesGroupsSeparator())
+		return this.getBytesGroupsString(base, padded).join(this.getBytesGroupsSeparator())
 	}
 }
 
@@ -143,7 +161,7 @@ class IpPanel extends HTMLElement {
 
 	setIp(ip) {
 		// TODO: find a way to display base 2 with leading zeros
-		let bytesGroups = ip.getBytesGroupsString(this.base)
+		let bytesGroups = ip.getBytesGroupsString(this.base, this.base != 10)
 		let displays = Array.from(this.querySelectorAll(".display"))
 		let inputs = Array.from(this.querySelectorAll("input"))
 
