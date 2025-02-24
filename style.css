@@ -15,14 +15,35 @@ body, input {
 	font-family: monospace;
 }
 
+ip-panel {
+	margin-top: 2em;
+	display: block;
+}
+
+ip-panel .header{
+	width: 8em;
+}
+
 ip-panel .div-cntnr span {
 	display: inline-block;
+}
+
+ip-panel[version="4"] .bytesContainer{
+	width: 5em;
 }
 
 ip-panel[version="4"] input{
 	max-width: 4.5em;
 }
 
+ip-panel[version="6"] .bytesContainer{
+	width: 9.5em;
+}
+
 ip-panel[version="6"] input{
 	max-width: 9em;
 }
+
+/* ip-panel[version="6"][base="10"][mask] {
+	display: none;
+} */

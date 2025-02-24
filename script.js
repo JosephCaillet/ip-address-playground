@@ -19,21 +19,48 @@ class IpAddress {
 		if (ip.includes(".")) {
 			// IPv4
 			this.version = 4
-			if (!/^[0-9.]*$/.test(ip)) {
+			this.masklen = 32
+			if (!/^[0-9.\/]*$/.test(ip)) {
 				throw new Error("Invalid IPv4: contains invalid characters")
 			}
 		} else if (ip.includes(":")) {
 			// IPv6
 			this.version = 6
-			if (!/^[0-9a-fA-F:]*$/.test(ip)) {
+			this.masklen = 128
+			if (!/^[0-9a-fA-F:\/]*$/.test(ip)) {
 				throw new Error("Invalid IPv6: contains invalid characters")
 			}
 		} else {
 			throw new Error("Invalid IP: nor IPv4 nor IPv6")
 		}
 
+		// Check for mask
+		if (ip.includes("/")) {
+			if (/\/.*\//.test(ip)) {
+				throw new Error("Invalid IP: \"/\" is seen more that once in row")
+			}
+
+			let maskBase = 10
+			let slashSplit = ip.split("/")
+			ip = slashSplit[0]
+			this.masklen = parseInt(slashSplit[1], maskBase)
+
+			if (Number.isNaN(this.masklen)) {
+				throw new Error("Invalid IP: mask is not a number")
+			}
+
+			if (this.masklen < 0) {
+				throw new Error("Invalid IP: mask must be a positive number")
+			}
+
+			let maxMask = this.getMaxMask()
+			if (this.masklen > maxMask) {
+				throw new Error(`Invalid IPv${this.version}: highest mask value is ${maxMask}`)
+			}
+		}
+
 		// Check each bytes group
-		let bytesGroupsNumber = this.isIpv4() ? 4 : 8
+		let bytesGroupsNumber = this.getBytesGroupsNumber()
 		this.bytesGroups = ip.split(this.getBytesGroupsSeparator())
 
 		// Handle "::" IPv6 notation, and reject it's IPv4 equivalent
@@ -98,8 +125,16 @@ class IpAddress {
 		return this.isIpv4() ? 10 : 16
 	}
 
+	getMaxMask() {
+		return this.isIpv4() ? 32 : 128
+	}
+
+	getBytesGroupsNumber() {
+		return this.isIpv4() ? 4 : 8
+	}
+
 	// TODO: add support for IPv6 compressed notation
-	getBytesGroupsString(base = 10, padded = false) {
+	getIpBytesGroupsString(base = 10, padded = false) {
 		let bytesGroupsString = this.bytesGroups.map(bg => Number(bg).toString(base))
 		if (padded) {
 
@@ -112,7 +147,23 @@ class IpAddress {
 		if (!base) {
 			base = this.getDefaultBase()
 		}
-		return this.getBytesGroupsString(base, padded).join(this.getBytesGroupsSeparator())
+		return this.getIpBytesGroupsString(base, padded).join(this.getBytesGroupsSeparator())
+	}
+
+	getMaskBytesGroupsString(base = 2) {
+		let maskBase2String = "1".repeat(this.masklen) + "0".repeat(this.getMaxMask() - this.masklen)
+		let bytesGroupsString = []
+
+		let splitSize = this.getMaxMask() / this.getBytesGroupsNumber()
+		for (let i = 0; i < this.getBytesGroupsNumber(); i++) {
+			bytesGroupsString.push(maskBase2String.slice(i * splitSize, (i + 1) * splitSize))
+		}
+
+		if (base != 2) {
+			bytesGroupsString = bytesGroupsString.map(v => parseInt(v, 2)).map(v => v.toString(base))
+		}
+
+		return bytesGroupsString
 	}
 }
 
@@ -121,6 +172,7 @@ class IpPanel extends HTMLElement {
 		super()
 		this.base = 10
 		this.version = 4
+		this.mask = false
 	}
 
 	connectedCallback() {
@@ -131,13 +183,14 @@ class IpPanel extends HTMLElement {
 	buildHtmlContent() {
 		this.base = this.getAttribute("base")
 		this.version = this.getAttribute("version")
+		this.mask = this.hasAttribute("mask")
 
 		let content = []
 		for (let i = 0; i < (this.version == 4 ? 4 : 8); i++) {
 			content.push(`
-				<span>
+				<span class="bytesContainer">
 					<div class="display">0</div>
-					<div><input type="text"></div>
+					${this.mask ? "" : '<div><input type="text"></div>'}
 				</span>
 			`)
 		}
@@ -145,11 +198,14 @@ class IpPanel extends HTMLElement {
 		content = content.join(`
 			<span>
 				<div>${this.version == 4 ? "." : ":"}</div>
-				<div>${this.version == 4 ? "." : ":"}</div>
+				${this.mask ? "" : `<div>${this.version == 4 ? "." : ":"}</div>`}
 			</span>
 		`)
 
-		this.innerHTML = `<div class="div-cntnr">${content}</div>`
+		this.innerHTML = `<div class="div-cntnr">
+			<span class="header">${this.mask ? "Mask" : "IP"} base ${this.base}:</span>
+			${content}
+		</div>`
 	}
 
 	setIp(ip) {
@@ -158,13 +214,15 @@ class IpPanel extends HTMLElement {
 			this.buildHtmlContent()
 		}
 
-		let bytesGroups = ip.getBytesGroupsString(this.base, this.base != 10)
+		let bytesGroups = this.mask ? ip.getMaskBytesGroupsString(this.base) : ip.getIpBytesGroupsString(this.base, this.base != 10)
 		let displays = Array.from(this.querySelectorAll(".display"))
 		let inputs = Array.from(this.querySelectorAll("input"))
 
 		for (let i = 0; i < bytesGroups.length; i++) {
 			displays[i].innerText = bytesGroups[i]
-			inputs[i].value = bytesGroups[i]
+			if (!this.mask) {
+				inputs[i].value = bytesGroups[i]
+			}
 		}
 	}
 }

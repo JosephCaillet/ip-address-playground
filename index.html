@@ -19,27 +19,22 @@
 			<span id="errorMessage"></span>
 		</div>
 
-		<!-- TODO: Add proper spacing via CSS -->
-		<p><br></p>
-
 		<ip-panel base="10" version="4"></ip-panel>
-
-		<p><br></p>
-
-		<ip-panel base="2" version="4"></ip-panel>
-
-		<p><br></p>
-
+		<ip-panel base="10" version="4" mask></ip-panel>
+		<ip-panel base="2"  version="4" mask></ip-panel>
+		<ip-panel base="2"  version="4"></ip-panel>
 		<ip-panel base="16" version="4"></ip-panel>
 	</div>
 	<!--
 		TODO:
 		Features:
-		* Add mask
-		* Allow individual bytes edit
+		* Allow individual bytes groups edit
+		* Display first/last address of range
 		* Add about section
 		Style:
 		* CSS
+		* Mask: color highlight for 1 and 0
+		* Increase font size (with support for relative)
 		Refactoring/code quality:
 		* Add tests for IP parsing
 		* Split file in modules
