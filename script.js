@@ -147,7 +147,7 @@ class IpAddress {
 		if (!base) {
 			base = this.getDefaultBase()
 		}
-		return this.getIpBytesGroupsString(base, padded).join(this.getBytesGroupsSeparator())
+		return this.getIpBytesGroupsString(base, padded).join(this.getBytesGroupsSeparator()) + "/" + this.masklen
 	}
 
 	getMaskBytesGroupsString(base = 2) {
