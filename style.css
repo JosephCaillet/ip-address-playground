@@ -1,12 +1,21 @@
-/* Dark theme */
+/* Light/dark theme */
+:root {
+	--main-text-color: black;
+	--main-bg-color: white;
+	--mask-highlight-color: lightcoral;
+}
+
 body {
 	transition: background 1s, color 1s;
+	color: var(--main-text-color);
+	background-color: var(--main-bg-color);
 }
 
 @media (prefers-color-scheme: dark) {
-	body {
-		background-color: #1c1c1e ;
-		color: #fafafa ;
+	:root {
+		--main-text-color: #fafafa;
+		--main-bg-color: #1c1c1e;
+		--mask-highlight-color: coral;
 	}
 }
 
@@ -42,6 +51,11 @@ ip-panel[version="6"] .bytesContainer{
 
 ip-panel[version="6"] input{
 	max-width: 9em;
+}
+
+ip-panel .maskHighlight
+{
+	color: var(--mask-highlight-color);
 }
 
 /* ip-panel[version="6"][base="10"][mask] {

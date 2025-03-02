@@ -219,7 +219,20 @@ class IpPanel extends HTMLElement {
 		let inputs = Array.from(this.querySelectorAll("input"))
 
 		for (let i = 0; i < bytesGroups.length; i++) {
-			displays[i].innerText = bytesGroups[i]
+			if (this.base == 2) {
+				let hightlightMask = ""
+
+				for (let j = 0; j < bytesGroups[i].length; j++) {
+					if (i * bytesGroups[i].length + j < ip.masklen) {
+						hightlightMask += `<span class="maskHighlight">${bytesGroups[i][j]}</span>`
+					} else {
+						hightlightMask += `<span>${bytesGroups[i][j]}</span>`
+					}
+				}
+				displays[i].innerHTML = hightlightMask
+			} else {
+				displays[i].innerText = bytesGroups[i]
+			}
 			if (!this.mask) {
 				inputs[i].value = bytesGroups[i]
 			}
