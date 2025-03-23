@@ -14,7 +14,7 @@ class IpAddress {
 		}
 	}
 
-	constructor(ip) {
+	constructor(ip, base = null) {
 		// Check IP version
 		if (ip.includes(".")) {
 			// IPv4
@@ -86,6 +86,7 @@ class IpAddress {
 		}
 
 		// Check each bytes group is a number within allowed range
+		base ??= this.getDefaultBase()
 		for (let i = 0; i < this.bytesGroups.length; i++) {
 			// Handle IPv6 "::" notation
 			if (this.isIpv6() && this.bytesGroups[i] === "") {
@@ -93,7 +94,6 @@ class IpAddress {
 			}
 
 			// Check is valid number
-			let base = this.getDefaultBase()
 			let byteGroupValue = parseInt(this.bytesGroups[i], base)
 			if (Number.isNaN(byteGroupValue)) {
 				throw new Error(`Invalid IP: bytes group number ${i + 1} is not a base ${base} number`)
@@ -173,6 +173,7 @@ class IpPanel extends HTMLElement {
 		this.base = 10
 		this.version = 4
 		this.mask = false
+		this.lastSetIp = null
 	}
 
 	connectedCallback() {
@@ -181,6 +182,7 @@ class IpPanel extends HTMLElement {
 
 	// TODO: fix selection (one should be able to select the first displayed line only)
 	buildHtmlContent() {
+		// Build HTML content
 		this.base = this.getAttribute("base")
 		this.version = this.getAttribute("version")
 		this.mask = this.hasAttribute("mask")
@@ -206,6 +208,26 @@ class IpPanel extends HTMLElement {
 			<span class="header">${this.mask ? "Mask" : "IP"} base ${this.base}:</span>
 			${content}
 		</div>`
+
+		// Setup listeners
+		this.querySelectorAll("input").forEach(e => {
+			e.addEventListener("input", e => {
+				let bytesGroup = []
+				this.querySelectorAll("input").forEach(e => bytesGroup.push(e.value))
+
+				let newIp = bytesGroup.join(this.lastSetIp.getBytesGroupsSeparator()) + "/" + this.lastSetIp.masklen
+
+				let newIpAddr
+				try {
+					newIpAddr = new IpAddress(newIp, this.base)
+					this.classList.remove("invalid")
+					this.dispatchEvent(new CustomEvent("ipChange", {detail: newIpAddr}))
+				} catch (err) {
+					this.classList.add("invalid")
+					return
+				}
+			})
+		})
 	}
 
 	setIp(ip) {
@@ -233,10 +255,18 @@ class IpPanel extends HTMLElement {
 			} else {
 				displays[i].innerText = bytesGroups[i]
 			}
-			if (!this.mask) {
+
+			// Do not allow edit mask.
+			// Do not set value of field being edited by user, which does not
+			// play nice with zero padded numbers (cursor position is reset to
+			// the right, which is confusing as a user)
+			if (!this.mask && inputs[i] != document.activeElement ) {
 				inputs[i].value = bytesGroups[i]
 			}
 		}
+
+		this.lastSetIp = ip
+		this.classList.remove("invalid")
 	}
 }
 
@@ -245,15 +275,19 @@ customElements.define("ip-panel", IpPanel)
 document.addEventListener("DOMContentLoaded", main)
 
 function main() {
+	// Main IP Input
 	document.querySelector("#mainIpInput").addEventListener("input", (e) => {
-		refreshIp(e.target.value)
+		refreshIpFromString(e.target.value)
 	})
 
+	// IP parts edit
+	document.querySelectorAll("ip-panel").forEach(e => e.addEventListener("ipChange", e => refreshIp(e.detail)))
+
 	// First refresh init
-	refreshIp(document.querySelector("#mainIpInput").value)
+	refreshIpFromString(document.querySelector("#mainIpInput").value)
 }
 
-function refreshIp(ip) {
+function refreshIpFromString(ip) {
 	let ipAddr
 	try {
 		ipAddr = new IpAddress(ip)
@@ -262,6 +296,10 @@ function refreshIp(ip) {
 		return document.querySelector("#errorMessage").innerText = err.message
 	}
 
+	refreshIp(ipAddr)
+}
+
+function refreshIp(ipAddr) {
 	document.querySelector("#mainIpDisplay").innerText = ipAddr.getIpString()
 	document.querySelectorAll("ip-panel").forEach(ipp => ipp.setIp(ipAddr))
 }

@@ -3,6 +3,7 @@
 	--main-text-color: black;
 	--main-bg-color: white;
 	--mask-highlight-color: lightcoral;
+	--invalid-color: crimson;
 }
 
 body {
@@ -20,7 +21,8 @@ body {
 }
 
 /* Main css */
-body, input {
+body,
+input {
 	font-family: monospace;
 }
 
@@ -29,7 +31,7 @@ ip-panel {
 	display: block;
 }
 
-ip-panel .header{
+ip-panel .header {
 	width: 8em;
 }
 
@@ -37,27 +39,39 @@ ip-panel .div-cntnr span {
 	display: inline-block;
 }
 
-ip-panel[version="4"] .bytesContainer{
-	width: 5em;
+ip-panel .bytesContainer,
+ip-panel input {
+	text-align: right;
 }
 
-ip-panel[version="4"] input{
+ip-panel[version="4"] .bytesContainer {
+	width: 5em;
+	text-align: right;
+}
+
+ip-panel[version="4"] input {
 	max-width: 4.5em;
 }
 
-ip-panel[version="6"] .bytesContainer{
+ip-panel[version="6"] .bytesContainer {
 	width: 9.5em;
 }
 
-ip-panel[version="6"] input{
+ip-panel[version="6"] input {
 	max-width: 9em;
 }
 
-ip-panel .maskHighlight
-{
+ip-panel .maskHighlight {
 	color: var(--mask-highlight-color);
 }
 
-/* ip-panel[version="6"][base="10"][mask] {
+ip-panel.invalid input {
+	color: var(--invalid-color);
+}
+
+/* Hiding field that don't make sense... */
+ip-panel[version="6"][base="10"][mask],
+/* ...and the ones that are buggy (current ip parser does not support IPv4 in base > 10 */
+ip-panel[version="4"][base="16"] {
 	display: none;
-} */
+}
